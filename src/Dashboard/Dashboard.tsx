@@ -1,7 +1,23 @@
 import React, { Component, Fragment } from 'react';
 import { connect } from "react-redux";
 import { Category, Movie, StoreState } from "../types";
-import { Button, Card, CardBody, CardHeader, Collapse, Nav, Navbar, NavbarBrand, NavbarToggler, NavItem, NavLink } from "reactstrap";
+import {
+    Button,
+    Card,
+    CardBody,
+    CardHeader,
+    Collapse,
+    Modal,
+    ModalBody,
+    ModalFooter,
+    ModalHeader,
+    Nav,
+    Navbar,
+    NavbarBrand,
+    NavbarToggler,
+    NavItem,
+    NavLink
+} from "reactstrap";
 import { authenticate, deleteMovie } from "../actions";
 import "./Dashboard.scss";
 import CategoryForm from "./CategoryForm";
@@ -19,6 +35,11 @@ interface ComponentState {
     expandedCatId?: number;
     expandedMovieId?: number;
     editMovieId?: number;
+    deleteMovieModal: {
+        show: boolean;
+        cat?: Category;
+        movie?: Movie;
+    };
 }
 
 class Dashboard extends Component<ComponentProps, ComponentState> {
@@ -26,7 +47,8 @@ class Dashboard extends Component<ComponentProps, ComponentState> {
         super(props);
         this.state = {
             isOpen: false,
-            expandedCatId: this.props.categories.length ? this.props.categories[0].id : 0
+            expandedCatId: this.props.categories.length ? this.props.categories[0].id : 0,
+            deleteMovieModal: { show: false }
         };
     }
 
@@ -46,12 +68,16 @@ class Dashboard extends Component<ComponentProps, ComponentState> {
         this.setState({ expandedMovieId: movieId, editMovieId: movieId });
     }
 
-    deleteMovie(catId: number, movie: Movie) {
-        this.props.deleteMovie(catId, movie);
+    deleteMovie(cat: Category, movie: Movie, confirmed = false) {
+        if (confirmed) {
+            this.setState({ deleteMovieModal: { show: false } }, () => this.props.deleteMovie(cat.id!, movie))
+        } else {
+            this.setState({ deleteMovieModal: { show: true, cat: cat, movie: movie } })
+        }
     }
 
     render() {
-        const { isOpen, expandedCatId, expandedMovieId, editMovieId } = this.state;
+        const { isOpen, expandedCatId, expandedMovieId, editMovieId, deleteMovieModal } = this.state;
         const { authenticate, isAdmin, categories } = this.props;
         return (
             <div className="dashboard bg-light">
@@ -131,7 +157,7 @@ class Dashboard extends Component<ComponentProps, ComponentState> {
                                                                     <div className="actions">
                                                                         <Button color="info" onClick={() => this.editMovie(movie.id)}>Edit</Button>
                                                                         <Button color="danger" className="ml-2"
-                                                                                onClick={() => this.deleteMovie(cat.id!, movie)}>Delete</Button>
+                                                                                onClick={() => this.deleteMovie(cat, movie)}>Delete</Button>
                                                                     </div>}
                                                                 </h6>
                                                             </CardHeader>
@@ -154,6 +180,18 @@ class Dashboard extends Component<ComponentProps, ComponentState> {
                         </CardBody>
                     </Card>
                 </div>
+                {isAdmin &&
+                <Modal isOpen={deleteMovieModal.show}>
+                    <ModalHeader className="bg-danger text-white">Confirm movie deletion</ModalHeader>
+                    <ModalBody>
+                        <h6>Are you sure that you want to delete</h6>
+                        <p>Movie: <b>{deleteMovieModal.movie && deleteMovieModal.movie.name}</b> From: <b>{deleteMovieModal.cat && deleteMovieModal.cat.name}</b> category</p>
+                    </ModalBody>
+                    <ModalFooter>
+                        <Button color="danger" onClick={() => this.deleteMovie(deleteMovieModal.cat!, deleteMovieModal.movie!, true)}>Confirm</Button>
+                        <Button color="dark" onClick={() => this.setState({ deleteMovieModal: { show: false } })}>Cancel</Button>
+                    </ModalFooter>
+                </Modal>}
             </div>
         );
     }
