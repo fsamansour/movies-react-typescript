@@ -1,4 +1,5 @@
-import { StoreAction, StoreState } from "../types";
+import { AuthPayload, CategoryPayload, MoviePayload, StoreAction, StoreState } from "../types";
+import * as ActionTypes from "../constants/ActionTypes";
 
 const initialState: StoreState = {
     categories: [
@@ -62,12 +63,77 @@ const initialState: StoreState = {
                 }
             ]
         }
-    ]
+    ],
+    isAdmin: false,
+    isLoggedIn: false
 };
 
 export const RootReducer = (state: StoreState = initialState, action: StoreAction): StoreState => {
+    let payload: any;
     switch (action.type) {
-
+        case ActionTypes.AUTHENTICATE:
+            payload = action.payload as AuthPayload;
+            return {
+                ...state,
+                isAdmin: payload.isAdmin,
+                isLoggedIn: payload.login
+            };
+        case ActionTypes.ADD_CATEGORY:
+            payload = action.payload as CategoryPayload;
+            payload.category.id = Math.floor(Math.random() * 100000);
+            return {
+                ...state,
+                categories: [...state.categories, payload.category]
+            };
+        case ActionTypes.EDIT_CATEGORY:
+            payload = action.payload as CategoryPayload;
+            return {
+                ...state,
+                categories: state.categories.map(category => {
+                    return category.id === payload.category.id ?
+                        payload.category :
+                        category
+                })
+            };
+        case ActionTypes.ADD_MOVIE:
+            payload = action.payload as MoviePayload;
+            payload.movie.id = Math.floor(Math.random() * 100000);
+            return {
+                ...state,
+                categories: state.categories.map(category => {
+                    return category.id === payload.catId ?
+                        { ...category, movies: category.movies ? [...category.movies, payload.movie] : [payload.movie] } :
+                        category
+                })
+            };
+        case ActionTypes.EDIT_MOVIE:
+            payload = action.payload as MoviePayload;
+            return {
+                ...state,
+                categories: state.categories.map(category => {
+                    return category.id === payload.catId ?
+                        {
+                            ...category, movies: category.movies!.map(movie => {
+                                return movie.id === payload.movie.id ?
+                                    payload.movie :
+                                    movie
+                            })
+                        } :
+                        category
+                })
+            };
+        case ActionTypes.DELETE_MOVIE:
+            payload = action.payload as MoviePayload;
+            return {
+                ...state,
+                categories: state.categories.map(category => {
+                    return category.id === payload.catId ?
+                        {
+                            ...category, movies: category.movies!.filter(movie => movie !== payload.movie)
+                        } :
+                        category
+                })
+            };
     }
     return state;
 };

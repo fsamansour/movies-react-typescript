@@ -1,26 +1,35 @@
 import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import { connect } from "react-redux";
+import { StoreState } from "./types";
+import { Switch, Redirect, Route } from 'react-router-dom';
+import Entry from "./Entry/Entry";
+import Dashboard from "./Dashboard/Dashboard";
 
-const App: React.FC = () => {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+interface ComponentProps {
+    isLoggedIn: boolean;
 }
 
-export default App;
+const App: React.FC<ComponentProps> = (props: ComponentProps) => {
+    const { isLoggedIn } = props;
+    return (
+        <div className="App">
+            {!isLoggedIn ?
+                <Switch>
+                    <Route component={Entry} path="/entry"/>
+                    <Redirect to="/entry"/>
+                </Switch> :
+                <Switch>
+                    <Route component={Dashboard} path="/dashboard"/>
+                    <Redirect to="/dashboard"/>
+                </Switch>}
+
+        </div>
+    );
+};
+const mapStateToProps = (state: StoreState) => ({
+    isLoggedIn: state.isLoggedIn
+});
+
+const mapDispatchToProps = {};
+
+export default connect(mapStateToProps, mapDispatchToProps)(App);
